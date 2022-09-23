@@ -1,0 +1,128 @@
+import { expect } from 'chai'
+import { ethers } from 'hardhat'
+import { FeistelShuffle, FeistelShuffle__factory } from '../typechain-types'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { BigNumber } from 'ethers'
+import { randomBytes } from 'crypto'
+import { execFile as execFileCb } from 'child_process'
+import { promisify } from 'util'
+import path from 'path'
+const execFile = promisify(execFileCb)
+
+describe('FeistelShuffle', () => {
+    let deployer: SignerWithAddress
+    let feistelShuffle: FeistelShuffle
+    let indices: number[]
+    let seed: BigNumber
+    before(async () => {
+        const signers = await ethers.getSigners()
+        deployer = signers[0]
+        feistelShuffle = await new FeistelShuffle__factory(deployer).deploy()
+        indices = Array(100)
+            .fill(0)
+            .map((_, i) => i)
+        seed = BigNumber.from('0x' + randomBytes(32).toString('hex'))
+    })
+
+    function assertSetEquality(left: number[], right: number[]) {
+        const set = new Set<number>()
+        for (const l of left) {
+            set.add(l)
+        }
+        expect(set.size).to.equal(left.length)
+        for (const r of right) {
+            expect(set.delete(r)).to.equal(true, `${r} exists in left`)
+        }
+        expect(set.size).to.equal(0)
+    }
+
+    it('should create permutation with FeistelShuffle', async () => {
+        const rounds = 4
+        const shuffled: BigNumber[] = []
+        for (let i = 0; i < indices.length; i++) {
+            const s = await feistelShuffle.getPermutedIndex(i, indices.length, seed, rounds)
+            shuffled.push(s)
+        }
+        assertSetEquality(
+            indices,
+            shuffled.map((s) => s.toNumber())
+        )
+        // console.log(
+        //     shuffled.length,
+        //     shuffled.map((s) => s.toNumber())
+        // )
+
+        // GASSSS
+        let sumGasUsed = BigNumber.from(0)
+        let maxGasUsed = BigNumber.from(0)
+        for (let i = 0; i < indices.length; i++) {
+            const _txSingle = await deployer.sendTransaction(
+                await feistelShuffle.populateTransaction.getPermutedIndex_REF(
+                    i,
+                    indices.length,
+                    seed,
+                    rounds
+                )
+            )
+            const txSingle = await _txSingle.wait()
+            const _txSingleOpt = await deployer.sendTransaction(
+                await feistelShuffle.populateTransaction.getPermutedIndex(
+                    i,
+                    indices.length,
+                    seed,
+                    rounds
+                )
+            )
+            const txSingleOpt = await _txSingleOpt.wait()
+            expect(txSingleOpt.gasUsed).to.be.lessThan(txSingle.gasUsed)
+            const actualGasUsed = txSingleOpt.gasUsed.sub(21_000)
+            if (actualGasUsed.gt(maxGasUsed)) {
+                maxGasUsed = actualGasUsed
+            }
+            sumGasUsed = sumGasUsed.add(actualGasUsed)
+        }
+        const averageGasUsed = sumGasUsed.div(indices.length)
+        console.log('Feistel avg gas:', averageGasUsed)
+        console.log('Feistel max gas:', maxGasUsed)
+        expect(averageGasUsed).to.be.lessThanOrEqual(3135) // <-- AVG gas
+        expect(maxGasUsed).to.be.lessThanOrEqual(3135) // <-- MAX gas per single call
+    })
+
+    it('should match ethereum/research implementation', async () => {
+        const rounds = 4
+        const shuffled: number[] = []
+        for (const i of indices) {
+            // Test both unoptimised & optimised versions
+            const s = await feistelShuffle.getPermutedIndex_REF(i, indices.length, seed, rounds)
+            const sOpt = await feistelShuffle.getPermutedIndex(i, indices.length, seed, rounds)
+            expect(s).to.equal(sOpt)
+            shuffled.push(sOpt.toNumber())
+        }
+        console.log('impl', shuffled)
+
+        const { stdout } = await execFile('python3', [
+            path.resolve(__dirname, '../scripts/feistel.py'),
+            indices.length.toString(),
+            seed.toString(),
+            rounds.toString(),
+        ])
+        const parsedConsensusSpecOutput = JSON.parse(stdout)
+        console.log('spec', parsedConsensusSpecOutput)
+
+        expect(shuffled).to.deep.equal(parsedConsensusSpecOutput)
+    })
+
+    it('should reject if x >= modulus', async () => {
+        const rounds = Math.ceil(6 * Math.log2(indices.length))
+        // on boundary
+        await expect(
+            feistelShuffle.getPermutedIndex_REF(100, 100, seed, rounds)
+        ).to.be.revertedWith('x too large')
+        await expect(feistelShuffle.getPermutedIndex(100, 100, seed, rounds)).to.be.reverted
+        // past boundary
+        await expect(
+            feistelShuffle.getPermutedIndex_REF(101, 100, seed, rounds)
+        ).to.be.revertedWith('x too large')
+        await expect(feistelShuffle.getPermutedIndex(101, 100, seed, rounds)).to.be.reverted
+    })
+})
