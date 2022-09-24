@@ -26,7 +26,7 @@ You have a choice between:
 
 ### `FeistelShuffle`
 
-The Feistel shuffle is cheap, coming in at just under 3900 gas to calculate a permutation for a single index for a list size of 10,000.
+The Feistel shuffle is cheap, coming in at ~4350 gas to calculate a permutation for a single index for a list size of 10,000.
 
 Feistel networks are based on _round functions_, and these are run a fixed number of times, as specified in the `rounds` parameter. As long as you input a cryptographically secure random `seed`, it is sufficient to set `rounds = 4` to make a _strong_ pseudorandom permutation [[1]](#m-luby-and-c-rackoff-1988).
 
@@ -43,8 +43,8 @@ modulus = 10_000
 ┌───────────┬────────┬───────┬───────┬───────┐
 │  shuffle  │ rounds │  min  │  max  │  avg  │
 ├───────────┼────────┼───────┼───────┼───────┤
-│  Feistel  │   4    │ 3822  │ 3846  │ 3845  │
-│ SwapOrNot │   90   │ 33283 │ 34597 │ 34021 │
+│  Feistel  │   4    │ 4326  │ 4350  │ 4349  │
+│ SwapOrNot │   90   │ 33342 │ 34550 │ 33993 │
 └───────────┴────────┴───────┴───────┴───────┘
 ```
 
