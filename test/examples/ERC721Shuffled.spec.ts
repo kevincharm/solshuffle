@@ -12,7 +12,7 @@ import {
 describe('ERC721Shuffled', () => {
     let deployer: SignerWithAddress
     let erc721Shuffled: ERC721Shuffled
-    let seed: BigNumber
+    let seed: string
     let maxSupply: number
     before(async () => {
         const signers = await ethers.getSigners()
@@ -25,23 +25,14 @@ describe('ERC721Shuffled', () => {
             },
             deployer
         ).deploy('My NFT contract', 'YEET', maxSupply)
-        seed = BigNumber.from('0x' + randomBytes(32).toString('hex'))
+        seed = ethers.utils.defaultAbiCoder.encode(
+            ['bytes32'],
+            ['0x' + randomBytes(32).toString('hex')]
+        )
     })
 
-    function assertSetEquality(left: number[], right: number[]) {
-        const set = new Set<number>()
-        for (const l of left) {
-            set.add(l)
-        }
-        expect(set.size).to.equal(left.length)
-        for (const r of right) {
-            expect(set.delete(r)).to.equal(true, `${r} exists in left`)
-        }
-        expect(set.size).to.equal(0)
-    }
-
     it('should correctly shuffle tokenIds of an NFT collection', async () => {
-        await erc721Shuffled.setRandomSeed(seed.toHexString())
+        await erc721Shuffled.setRandomSeed(seed)
         for (let i = 0; i < maxSupply; i++) {
             await erc721Shuffled.mint()
         }

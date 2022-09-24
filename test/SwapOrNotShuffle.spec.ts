@@ -7,14 +7,14 @@ import { randomBytes } from 'crypto'
 import { execFile as execFileCb } from 'child_process'
 import { promisify } from 'util'
 import path from 'path'
-import { pySwapOrNot } from '../scripts/pySwapOrNot'
+import { pyMultiSwapOrNot, pySwapOrNot } from '../scripts/pySwapOrNot'
 const execFile = promisify(execFileCb)
 
 describe('SwapOrNotShuffle', () => {
     let deployer: SignerWithAddress
     let swapOrNotShuffle: SwapOrNotShuffle
     let indices: number[]
-    let seed: BigNumber
+    let seed: string
     before(async () => {
         const signers = await ethers.getSigners()
         deployer = signers[0]
@@ -22,7 +22,10 @@ describe('SwapOrNotShuffle', () => {
         indices = Array(100)
             .fill(0)
             .map((_, i) => i)
-        seed = BigNumber.from('0x' + randomBytes(32).toString('hex'))
+        seed = ethers.utils.defaultAbiCoder.encode(
+            ['bytes32'],
+            ['0x' + randomBytes(32).toString('hex')]
+        )
     })
 
     function assertSetEquality(left: number[], right: number[]) {
@@ -117,13 +120,7 @@ describe('SwapOrNotShuffle', () => {
         }
         // console.log('impl', shuffled)
 
-        const { stdout } = await execFile('python3', [
-            path.resolve(__dirname, '../scripts/swap_or_not.py'),
-            indices.length.toString(),
-            seed.toString(),
-            rounds.toString(),
-        ])
-        const parsedConsensusSpecOutput = JSON.parse(stdout)
+        const parsedConsensusSpecOutput = await pyMultiSwapOrNot(indices.length, seed, rounds)
         // console.log('spec', parsedConsensusSpecOutput)
 
         expect(shuffled).to.deep.equal(parsedConsensusSpecOutput)

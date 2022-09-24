@@ -10,7 +10,7 @@ describe('FeistelShuffle', () => {
     let deployer: SignerWithAddress
     let feistelShuffle: FeistelShuffle
     let indices: number[]
-    let seed: BigNumber
+    let seed: string
     before(async () => {
         const signers = await ethers.getSigners()
         deployer = signers[0]
@@ -18,7 +18,10 @@ describe('FeistelShuffle', () => {
         indices = Array(100)
             .fill(0)
             .map((_, i) => i)
-        seed = BigNumber.from('0x' + randomBytes(32).toString('hex'))
+        seed = ethers.utils.defaultAbiCoder.encode(
+            ['bytes32'],
+            ['0x' + randomBytes(32).toString('hex')]
+        )
     })
 
     function assertSetEquality(left: number[], right: number[]) {

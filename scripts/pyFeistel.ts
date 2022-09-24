@@ -25,10 +25,10 @@ export async function pyFeistel(
 ) {
     const { stdout } = await execFile('python3', [
         feistelPyScript,
-        modulus.toString(),
-        seed.toString(),
-        rounds.toString(),
-        x.toString(),
+        BigNumber.from(modulus).toString(),
+        BigNumber.from(seed).toString(),
+        BigNumber.from(rounds).toString(),
+        BigNumber.from(x).toString(),
     ])
     return BigNumber.from(stdout.trim())
 }
@@ -44,9 +44,9 @@ export async function pyFeistel(
 export async function pyMultiFeistel(modulus: BigNumberish, seed: BigNumberish, rounds: number) {
     const { stdout } = await execFile('python3', [
         feistelPyScript,
-        modulus.toString(),
-        seed.toString(),
-        rounds.toString(),
+        BigNumber.from(modulus).toString(),
+        BigNumber.from(seed).toString(),
+        BigNumber.from(rounds).toString(),
     ])
     // JSON.parse already parses numbers into number types, so doesn't support bigints
     const shuffled = parseBigNumberArray(stdout)
