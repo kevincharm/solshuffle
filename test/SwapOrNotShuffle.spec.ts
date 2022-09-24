@@ -6,7 +6,6 @@ import { BigNumber, BigNumberish } from 'ethers'
 import { randomBytes } from 'crypto'
 import { execFile as execFileCb } from 'child_process'
 import { promisify } from 'util'
-import path from 'path'
 import { pyMultiSwapOrNot, pySwapOrNot } from '../scripts/pySwapOrNot'
 const execFile = promisify(execFileCb)
 
