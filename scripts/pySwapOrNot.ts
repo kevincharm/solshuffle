@@ -6,25 +6,25 @@ import assert from 'assert'
 import { parseBigNumberArray } from './parseBigNumberArray'
 const execFile = promisify(execFileCb)
 
-const feistelPyScript = path.resolve(__dirname, '../scripts/feistel.py')
+const swapOrNotPyScript = path.resolve(__dirname, '../scripts/swap_or_not.py')
 
 /**
- * Run the reference Python script for Feistel shuffle, returning entire shuffled list
+ * Run the reference Python script for swap-or-not shuffle, returning entire shuffled list
  *
  * @param x index to permute
  * @param modulus cardinality of list to shuffle
  * @param seed random seed
- * @param rounds how many rounds of Feistel to apply
+ * @param rounds how many rounds of swap-or-not to apply
  * @returns array of shuffled indices
  */
-export async function pyFeistel(
+export async function pySwapOrNot(
     x: BigNumberish,
     modulus: BigNumberish,
     seed: BigNumberish,
     rounds: number
 ) {
     const { stdout } = await execFile('python3', [
-        feistelPyScript,
+        swapOrNotPyScript,
         modulus.toString(),
         seed.toString(),
         rounds.toString(),
@@ -34,16 +34,16 @@ export async function pyFeistel(
 }
 
 /**
- * Run the reference Python script for Feistel shuffle, returning entire shuffled list
+ * Run the reference Python script for swap-or-not shuffle, returning entire shuffled list
  *
  * @param modulus cardinality of list to shuffle
  * @param seed random seed
- * @param rounds how many rounds of Feistel to apply
+ * @param rounds how many rounds of swap-or-not to apply
  * @returns array of shuffled indices
  */
-export async function pyMultiFeistel(modulus: BigNumberish, seed: BigNumberish, rounds: number) {
+export async function pyMultiSwapOrNot(modulus: BigNumberish, seed: BigNumberish, rounds: number) {
     const { stdout } = await execFile('python3', [
-        feistelPyScript,
+        swapOrNotPyScript,
         modulus.toString(),
         seed.toString(),
         rounds.toString(),

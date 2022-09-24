@@ -107,9 +107,9 @@ describe('FeistelShuffle', () => {
             sumGasUsed = sumGasUsed.add(actualGasUsed)
         }
         const averageGasUsed = sumGasUsed.div(indices.length)
-        console.log('Feistel avg gas:', averageGasUsed)
-        console.log('Feistel max gas:', maxGasUsed)
+        // console.log('Feistel avg gas:', averageGasUsed)
         expect(averageGasUsed).to.be.lessThanOrEqual(3450) // <-- AVG gas
+        // console.log('Feistel max gas:', maxGasUsed)
         expect(maxGasUsed).to.be.lessThanOrEqual(3450) // <-- MAX gas per single call
     })
 

@@ -2,11 +2,12 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { SwapOrNotShuffle, SwapOrNotShuffle__factory } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { BigNumber } from 'ethers'
+import { BigNumber, BigNumberish } from 'ethers'
 import { randomBytes } from 'crypto'
 import { execFile as execFileCb } from 'child_process'
 import { promisify } from 'util'
 import path from 'path'
+import { pySwapOrNot } from '../scripts/pySwapOrNot'
 const execFile = promisify(execFileCb)
 
 describe('SwapOrNotShuffle', () => {
@@ -34,6 +35,34 @@ describe('SwapOrNotShuffle', () => {
             expect(set.delete(r)).to.equal(true, `${r} exists in left`)
         }
         expect(set.size).to.equal(0)
+    }
+
+    /**
+     * Same as calling `swapOrNotShuffle.getPermutedIndex_REF(...)`, but additionally
+     * checks the return value against the Python reference implementation and asserts
+     * they're equal.
+     *
+     * @param x
+     * @param modulus
+     * @param seed
+     * @param rounds
+     * @returns
+     */
+    async function getPermutedIndexRefsChecked(
+        x: BigNumberish,
+        modulus: BigNumberish,
+        seed: BigNumberish,
+        rounds: number
+    ) {
+        const contractRefAnswer = await swapOrNotShuffle.getPermutedIndex_REF(
+            x,
+            modulus,
+            seed,
+            rounds
+        )
+        const pyRefAnswer = await pySwapOrNot(x, modulus, seed, rounds)
+        expect(contractRefAnswer).to.equal(pyRefAnswer)
+        return contractRefAnswer
     }
 
     it('should create permutation with SwapOrNotShuffle', async () => {
@@ -81,12 +110,12 @@ describe('SwapOrNotShuffle', () => {
         const shuffled: number[] = []
         for (const i of indices) {
             // Test both unoptimised & optimised versions
-            const s = await swapOrNotShuffle.getPermutedIndex_REF(i, indices.length, seed, rounds)
+            const s = await getPermutedIndexRefsChecked(i, indices.length, seed, rounds)
             const sOpt = await swapOrNotShuffle.getPermutedIndex(i, indices.length, seed, rounds)
             expect(s).to.equal(sOpt)
             shuffled.push(sOpt.toNumber())
         }
-        console.log('impl', shuffled)
+        // console.log('impl', shuffled)
 
         const { stdout } = await execFile('python3', [
             path.resolve(__dirname, '../scripts/swap_or_not.py'),
@@ -95,7 +124,7 @@ describe('SwapOrNotShuffle', () => {
             rounds.toString(),
         ])
         const parsedConsensusSpecOutput = JSON.parse(stdout)
-        console.log('spec', parsedConsensusSpecOutput)
+        // console.log('spec', parsedConsensusSpecOutput)
 
         expect(shuffled).to.deep.equal(parsedConsensusSpecOutput)
     })
