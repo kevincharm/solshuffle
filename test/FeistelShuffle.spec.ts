@@ -84,8 +84,8 @@ describe('FeistelShuffle', () => {
         const averageGasUsed = sumGasUsed.div(indices.length)
         console.log('Feistel avg gas:', averageGasUsed)
         console.log('Feistel max gas:', maxGasUsed)
-        expect(averageGasUsed).to.be.lessThanOrEqual(3135) // <-- AVG gas
-        expect(maxGasUsed).to.be.lessThanOrEqual(3135) // <-- MAX gas per single call
+        expect(averageGasUsed).to.be.lessThanOrEqual(3427) // <-- AVG gas
+        expect(maxGasUsed).to.be.lessThanOrEqual(3428) // <-- MAX gas per single call
     })
 
     it('should match ethereum/research implementation', async () => {
@@ -112,8 +112,8 @@ describe('FeistelShuffle', () => {
         expect(shuffled).to.deep.equal(parsedConsensusSpecOutput)
     })
 
-    it('should reject if x >= modulus', async () => {
-        const rounds = Math.ceil(6 * Math.log2(indices.length))
+    it('should revert if x >= modulus', async () => {
+        const rounds = 4
         // on boundary
         await expect(
             feistelShuffle.getPermutedIndex_REF(100, 100, seed, rounds)
@@ -124,5 +124,40 @@ describe('FeistelShuffle', () => {
             feistelShuffle.getPermutedIndex_REF(101, 100, seed, rounds)
         ).to.be.revertedWith('x too large')
         await expect(feistelShuffle.getPermutedIndex(101, 100, seed, rounds)).to.be.reverted
+    })
+
+    it('should revert if modulus == 0', async () => {
+        const rounds = 4
+        await expect(feistelShuffle.getPermutedIndex_REF(0, 0, seed, rounds)).to.be.revertedWith(
+            'modulus must be > 0'
+        )
+        await expect(feistelShuffle.getPermutedIndex(0, 0, seed, rounds)).to.be.reverted
+    })
+
+    it('should revert if modulus**(round-1) would revert', async () => {
+        const rounds = 3
+
+        const modulusLt128 = BigNumber.from(2).pow(128).sub(1)
+        // before boundary
+        expect(
+            await feistelShuffle.getPermutedIndex_REF(14351, modulusLt128, seed, rounds)
+        ).to.be.instanceOf(BigNumber)
+        expect(
+            await feistelShuffle.getPermutedIndex(14351, modulusLt128, seed, rounds)
+        ).to.be.instanceOf(BigNumber)
+
+        const modulusEq128 = BigNumber.from(2).pow(128)
+        // on boundary
+        await expect(feistelShuffle.getPermutedIndex_REF(14351, modulusEq128, seed, rounds)).to.be
+            .reverted
+        await expect(feistelShuffle.getPermutedIndex(58470, modulusEq128, seed, rounds)).to.be
+            .reverted
+
+        const modulusGt128 = BigNumber.from(2).pow(128).add(1)
+        // past boundary
+        await expect(feistelShuffle.getPermutedIndex_REF(4664563, modulusGt128, seed, rounds)).to.be
+            .reverted
+        await expect(feistelShuffle.getPermutedIndex(2454266, modulusGt128, seed, rounds)).to.be
+            .reverted
     })
 })

@@ -78,7 +78,7 @@ library FeistelShuffle {
         if (sqrtN**2 == n) {
             return n;
         }
-        return (sqrt(n) + 1)**2;
+        return (sqrtN + 1)**2;
     }
 
     /// @notice Compute a Feistel shuffle mapping for index `x`
@@ -95,6 +95,7 @@ library FeistelShuffle {
         uint256 seed,
         uint256 rounds
     ) external pure returns (uint256) {
+        require(modulus != 0, "modulus must be > 0");
         require(x < modulus, "x too large");
         uint256 h = sqrt(nextPerfectSquare(modulus));
         do {
@@ -122,9 +123,14 @@ library FeistelShuffle {
         uint256 seed,
         uint256 rounds
     ) external pure returns (uint256) {
+        modulus**(rounds - 1); // checked exp
         assembly {
-            // assert(x < modulus)
-            if gt(x, sub(modulus, 1)) {
+            // Assert some preconditions
+            // (x < modulus): index to be permuted must lie within the domain of [0, modulus)
+            let xGteModulus := gt(x, sub(modulus, 1))
+            // (modulus != 0): domain must be non-zero (value of 1 also doesn't really make sense)
+            let modulusZero := iszero(modulus)
+            if or(xGteModulus, modulusZero) {
                 revert(0, 0)
             }
 
@@ -164,7 +170,13 @@ library FeistelShuffle {
                 nps := modulus
             }
             default {
-                nps := exp(add(sqrt(modulus), 1), 2)
+                let sqrtN1 := add(sqrtN, 1)
+                // pre-check for square overflow
+                if gt(sqrtN1, sub(exp(2, 128), 1)) {
+                    // overflow
+                    revert(0, 0)
+                }
+                nps := exp(sqrtN1, 2)
             }
             // h <- sqrt(nps)
             let h := sqrt(nps)
