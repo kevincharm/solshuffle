@@ -9,7 +9,7 @@ import {
     FeistelShuffle__factory,
 } from '../../typechain-types'
 
-describe('FeistelShuffle', () => {
+describe('ERC721Shuffled', () => {
     let deployer: SignerWithAddress
     let erc721Shuffled: ERC721Shuffled
     let seed: BigNumber
@@ -50,5 +50,5 @@ describe('FeistelShuffle', () => {
             tokenUris.add(await erc721Shuffled.tokenURI(i + 1))
         }
         expect(tokenUris.size).to.equal(maxSupply)
-    })
+    }).timeout(60_000)
 })
