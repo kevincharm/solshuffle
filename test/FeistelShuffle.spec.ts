@@ -134,6 +134,73 @@ describe('FeistelShuffle', () => {
         await expect(feistelShuffle.getPermutedIndex(0, 0, seed, rounds)).to.be.reverted
     })
 
+    it('should handle small modulus', async () => {
+        // This is mainly to ensure the sqrt / nextPerfectSquare functions are correct
+        const rounds = 4
+
+        // list size of 1
+        let modulus = 1
+        const permutedOneRef = await feistelShuffle.getPermutedIndex_REF(0, modulus, seed, rounds)
+        expect(permutedOneRef).to.equal(0)
+        expect(permutedOneRef).to.equal(
+            await feistelShuffle.getPermutedIndex(0, modulus, seed, rounds)
+        )
+
+        // list size of 2
+        modulus = 2
+        const shuffledTwo = new Set<number>()
+        for (let i = 0; i < modulus; i++) {
+            shuffledTwo.add(
+                (await feistelShuffle.getPermutedIndex_REF(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        // |shuffledSet| = modulus
+        expect(shuffledTwo.size).to.equal(modulus)
+        // set equality with optimised version
+        for (let i = 0; i < modulus; i++) {
+            shuffledTwo.delete(
+                (await feistelShuffle.getPermutedIndex(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        expect(shuffledTwo.size).to.equal(0)
+
+        // list size of 3
+        modulus = 3
+        const shuffledThree = new Set<number>()
+        for (let i = 0; i < modulus; i++) {
+            shuffledThree.add(
+                (await feistelShuffle.getPermutedIndex_REF(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        // |shuffledSet| = modulus
+        expect(shuffledThree.size).to.equal(modulus)
+        // set equality with optimised version
+        for (let i = 0; i < modulus; i++) {
+            shuffledThree.delete(
+                (await feistelShuffle.getPermutedIndex(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        expect(shuffledThree.size).to.equal(0)
+
+        // list size of 4 (past boundary)
+        modulus = 4
+        const shuffledFour = new Set<number>()
+        for (let i = 0; i < modulus; i++) {
+            shuffledFour.add(
+                (await feistelShuffle.getPermutedIndex_REF(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        // |shuffledSet| = modulus
+        expect(shuffledFour.size).to.equal(modulus)
+        // set equality with optimised version
+        for (let i = 0; i < modulus; i++) {
+            shuffledFour.delete(
+                (await feistelShuffle.getPermutedIndex(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        expect(shuffledFour.size).to.equal(0)
+    })
+
     it('should revert if modulus**(round-1) would revert', async () => {
         const rounds = 3
 

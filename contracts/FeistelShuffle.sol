@@ -10,28 +10,15 @@ library FeistelShuffle {
     /// @param s integer to sqrt
     /// @return z sqrt(s), rounding to zero
     function sqrt(uint256 s) private pure returns (uint256 z) {
-        assembly {
-            switch gt(s, 3)
-            // if (s > 3)
-            case 1 {
-                z := s
-                let r := add(div(s, 2), 1)
-                for {
-
-                } lt(r, z) {
-
-                } {
-                    z := r
-                    r := div(add(div(s, r), r), 2)
-                }
+        if (s > 3) {
+            z = s;
+            uint256 x = s / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (s / x + x) / 2;
             }
-            default {
-                switch not(iszero(s))
-                // else if (s != 0)
-                case 1 {
-                    z := 1
-                }
-            }
+        } else if (s != 0) {
+            z = 1;
         }
     }
 
@@ -151,9 +138,8 @@ library FeistelShuffle {
                     }
                 }
                 default {
-                    switch not(iszero(s))
-                    // else if (s != 0)
-                    case 1 {
+                    if not(iszero(s)) {
+                        // else if (s != 0)
                         z := 1
                     }
                 }
