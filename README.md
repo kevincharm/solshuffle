@@ -54,7 +54,7 @@ modulus = 10_000
 
 > Difficulty level: SHADOWY SUPER CODER 🥷
 
-Shown below is how you'd shuffle your ERC721 metadata using the `FeistelShuffle` library, after calling VRF (or whatever CSPRNG, idgaf) to set a `randomSeed`:
+Shown below is a truncated example of how you'd shuffle your ERC721 metadata using the `FeistelShuffle` library, after calling VRF (or whatever CSPRNG, idgaf) to set a `randomSeed`.
 
 ```solidity
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -65,8 +65,10 @@ import { FeistelShuffle } from "@kevincharm/solshuffle/contracts/FeistelShuffle.
 contract ERC721Shuffled is ERC721, ERC721Enumerable {
     using Strings for uint256;
 
+    /// @notice The first token ID. For most NFT collections, this is 1.
+    uint256 public constant FIRST_TOKEN_ID = 1;
     /// @notice The max supply is used as the modulus parameter in the shuffle algos.
-    uint256 public constant MAX_SUPPLY = 10_000;
+    uint256 public immutable maxSupply;
     /// @notice Random seed that determines the permutation of the shuffle,
     ///     should only be set once.
     bytes32 public randomSeed;
@@ -87,13 +89,13 @@ contract ERC721Shuffled is ERC721, ERC721Enumerable {
 
         // statelessly map tokenId -> shuffled tokenId,
         // deterministically according to the `randomSeed` and `rounds` parameters
-        // avg ~3.5k gas! wow!
-        uint256 shuffledTokenId = FeistelShuffle.getPermutedIndex(
-            tokenId,
-            MAX_SUPPLY, /** Must stay constant */
-            uint256(randomSeed), /** Must stay constant (once set) */
-            4 /** Must stay constant */
-        );
+        uint256 shuffledTokenId = FIRST_TOKEN_ID +
+            FeistelShuffle.getPermutedIndex(
+                tokenId - FIRST_TOKEN_ID, /** shuffle is 0-indexed, so we add offsets */
+                maxSupply, /** Must stay constant */
+                uint256(randomSeed), /** Must stay constant (once set) */
+                4 /** Must stay constant */
+            );
 
         // use the shuffled tokenId as the metadata index
         return string(abi.encodePacked(_baseURI(), shuffledTokenId.toString()));
