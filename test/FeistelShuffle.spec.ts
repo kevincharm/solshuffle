@@ -84,8 +84,8 @@ describe('FeistelShuffle', () => {
         const averageGasUsed = sumGasUsed.div(indices.length)
         console.log('Feistel avg gas:', averageGasUsed)
         console.log('Feistel max gas:', maxGasUsed)
-        expect(averageGasUsed).to.be.lessThanOrEqual(3427) // <-- AVG gas
-        expect(maxGasUsed).to.be.lessThanOrEqual(3428) // <-- MAX gas per single call
+        expect(averageGasUsed).to.be.lessThanOrEqual(3450) // <-- AVG gas
+        expect(maxGasUsed).to.be.lessThanOrEqual(3450) // <-- MAX gas per single call
     })
 
     it('should match ethereum/research implementation', async () => {

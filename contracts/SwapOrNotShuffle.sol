@@ -56,7 +56,9 @@ library SwapOrNotShuffle {
     ) external pure returns (uint256) {
         // We accept uint256 for convenience, but we need signed ints for the algo
         require(
-            x_ < modulus_ && modulus_ <= uint256(type(int256).max),
+            x_ < modulus_ &&
+                modulus_ != 0 &&
+                modulus_ <= uint256(type(int256).max),
             "x too large or modulus OOB"
         );
         int256 x = int256(x_);
@@ -92,9 +94,12 @@ library SwapOrNotShuffle {
         uint8 rounds
     ) external pure returns (uint256) {
         assembly {
-            // assert(x < modulus && modulus_ <= INT256_MAX)
+            // assert(x < modulus && modulus != 0 && modulus_ <= INT256_MAX)
             let int256Max := sub(exp(2, 255), 1)
-            if or(gt(x, sub(modulus, 1)), gt(modulus, int256Max)) {
+            if or(
+                or(gt(x, sub(modulus, 1)), eq(modulus, 0)),
+                gt(modulus, int256Max)
+            ) {
                 revert(0, 0)
             }
 

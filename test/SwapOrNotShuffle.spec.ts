@@ -122,4 +122,12 @@ describe('SwapOrNotShuffle', () => {
         ).to.be.revertedWith('x too large or modulus OOB')
         await expect(swapOrNotShuffle.getPermutedIndex(101, 100, seed, rounds)).to.be.reverted
     })
+
+    it('should revert if modulus == 0', async () => {
+        const rounds = Math.ceil(6 * Math.log2(indices.length))
+        await expect(swapOrNotShuffle.getPermutedIndex_REF(0, 0, seed, rounds)).to.be.revertedWith(
+            'x too large or modulus OOB'
+        )
+        await expect(swapOrNotShuffle.getPermutedIndex(0, 0, seed, rounds)).to.be.reverted
+    })
 })
