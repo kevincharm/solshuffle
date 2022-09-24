@@ -2,12 +2,9 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { FeistelShuffle, FeistelShuffle__factory } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { BigNumber } from 'ethers'
+import { BigNumber, BigNumberish } from 'ethers'
 import { randomBytes } from 'crypto'
-import { execFile as execFileCb } from 'child_process'
-import { promisify } from 'util'
-import path from 'path'
-const execFile = promisify(execFileCb)
+import { pyFeistel, pyMultiFeistel } from '../scripts/pyFeistel'
 
 describe('FeistelShuffle', () => {
     let deployer: SignerWithAddress
@@ -34,6 +31,34 @@ describe('FeistelShuffle', () => {
             expect(set.delete(r)).to.equal(true, `${r} exists in left`)
         }
         expect(set.size).to.equal(0)
+    }
+
+    /**
+     * Same as calling `feistelShuffle.getPermutedIndex_REF(...)`, but additionally
+     * checks the return value against the Python reference implementation and asserts
+     * they're equal.
+     *
+     * @param x
+     * @param modulus
+     * @param seed
+     * @param rounds
+     * @returns
+     */
+    async function getPermutedIndexRefsChecked(
+        x: BigNumberish,
+        modulus: BigNumberish,
+        seed: BigNumberish,
+        rounds: number
+    ) {
+        const contractRefAnswer = await feistelShuffle.getPermutedIndex_REF(
+            x,
+            modulus,
+            seed,
+            rounds
+        )
+        const pyRefAnswer = await pyFeistel(x, modulus, seed, rounds)
+        expect(contractRefAnswer).to.equal(pyRefAnswer)
+        return contractRefAnswer
     }
 
     it('should create permutation with FeistelShuffle', async () => {
@@ -93,21 +118,15 @@ describe('FeistelShuffle', () => {
         const shuffled: number[] = []
         for (const i of indices) {
             // Test both unoptimised & optimised versions
-            const s = await feistelShuffle.getPermutedIndex_REF(i, indices.length, seed, rounds)
+            const s = await getPermutedIndexRefsChecked(i, indices.length, seed, rounds)
             const sOpt = await feistelShuffle.getPermutedIndex(i, indices.length, seed, rounds)
             expect(s).to.equal(sOpt)
             shuffled.push(sOpt.toNumber())
         }
-        console.log('impl', shuffled)
+        // console.log('impl', shuffled)
 
-        const { stdout } = await execFile('python3', [
-            path.resolve(__dirname, '../scripts/feistel.py'),
-            indices.length.toString(),
-            seed.toString(),
-            rounds.toString(),
-        ])
-        const parsedConsensusSpecOutput = JSON.parse(stdout)
-        console.log('spec', parsedConsensusSpecOutput)
+        const parsedConsensusSpecOutput = await pyMultiFeistel(indices.length, seed, rounds)
+        // console.log('spec', parsedConsensusSpecOutput)
 
         expect(shuffled).to.deep.equal(parsedConsensusSpecOutput)
     })
@@ -140,7 +159,7 @@ describe('FeistelShuffle', () => {
 
         // list size of 1
         let modulus = 1
-        const permutedOneRef = await feistelShuffle.getPermutedIndex_REF(0, modulus, seed, rounds)
+        const permutedOneRef = await getPermutedIndexRefsChecked(0, modulus, seed, rounds)
         expect(permutedOneRef).to.equal(0)
         expect(permutedOneRef).to.equal(
             await feistelShuffle.getPermutedIndex(0, modulus, seed, rounds)
@@ -151,7 +170,7 @@ describe('FeistelShuffle', () => {
         const shuffledTwo = new Set<number>()
         for (let i = 0; i < modulus; i++) {
             shuffledTwo.add(
-                (await feistelShuffle.getPermutedIndex_REF(i, modulus, seed, rounds)).toNumber()
+                (await getPermutedIndexRefsChecked(i, modulus, seed, rounds)).toNumber()
             )
         }
         // |shuffledSet| = modulus
@@ -169,7 +188,7 @@ describe('FeistelShuffle', () => {
         const shuffledThree = new Set<number>()
         for (let i = 0; i < modulus; i++) {
             shuffledThree.add(
-                (await feistelShuffle.getPermutedIndex_REF(i, modulus, seed, rounds)).toNumber()
+                (await getPermutedIndexRefsChecked(i, modulus, seed, rounds)).toNumber()
             )
         }
         // |shuffledSet| = modulus
@@ -187,7 +206,7 @@ describe('FeistelShuffle', () => {
         const shuffledFour = new Set<number>()
         for (let i = 0; i < modulus; i++) {
             shuffledFour.add(
-                (await feistelShuffle.getPermutedIndex_REF(i, modulus, seed, rounds)).toNumber()
+                (await getPermutedIndexRefsChecked(i, modulus, seed, rounds)).toNumber()
             )
         }
         // |shuffledSet| = modulus
@@ -207,7 +226,7 @@ describe('FeistelShuffle', () => {
         const modulusLt128 = BigNumber.from(2).pow(128).sub(1)
         // before boundary
         expect(
-            await feistelShuffle.getPermutedIndex_REF(14351, modulusLt128, seed, rounds)
+            await getPermutedIndexRefsChecked(14351, modulusLt128, seed, rounds)
         ).to.be.instanceOf(BigNumber)
         expect(
             await feistelShuffle.getPermutedIndex(14351, modulusLt128, seed, rounds)
@@ -215,14 +234,13 @@ describe('FeistelShuffle', () => {
 
         const modulusEq128 = BigNumber.from(2).pow(128)
         // on boundary
-        await expect(feistelShuffle.getPermutedIndex_REF(14351, modulusEq128, seed, rounds)).to.be
-            .reverted
+        await expect(getPermutedIndexRefsChecked(14351, modulusEq128, seed, rounds)).to.be.reverted
         await expect(feistelShuffle.getPermutedIndex(58470, modulusEq128, seed, rounds)).to.be
             .reverted
 
         const modulusGt128 = BigNumber.from(2).pow(128).add(1)
         // past boundary
-        await expect(feistelShuffle.getPermutedIndex_REF(4664563, modulusGt128, seed, rounds)).to.be
+        await expect(getPermutedIndexRefsChecked(4664563, modulusGt128, seed, rounds)).to.be
             .reverted
         await expect(feistelShuffle.getPermutedIndex(2454266, modulusGt128, seed, rounds)).to.be
             .reverted
