@@ -159,4 +159,53 @@ describe('SwapOrNotShuffle', () => {
         )
         await expect(swapOrNotShuffle.getPermutedIndex(0, 0, seed, rounds)).to.be.reverted
     })
+
+    it('should handle small modulus', async () => {
+        // This is mainly to ensure the sqrt / nextPerfectSquare functions are correct
+        const rounds = 4
+
+        // list size of 1
+        let modulus = 1
+        const permutedOneRef = await getPermutedIndexRefsChecked(0, modulus, seed, rounds)
+        expect(permutedOneRef).to.equal(0)
+        expect(permutedOneRef).to.equal(
+            await swapOrNotShuffle.getPermutedIndex(0, modulus, seed, rounds)
+        )
+
+        // list size of 2
+        modulus = 2
+        const shuffledTwo = new Set<number>()
+        for (let i = 0; i < modulus; i++) {
+            shuffledTwo.add(
+                (await getPermutedIndexRefsChecked(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        // |shuffledSet| = modulus
+        expect(shuffledTwo.size).to.equal(modulus)
+        // set equality with optimised version
+        for (let i = 0; i < modulus; i++) {
+            shuffledTwo.delete(
+                (await swapOrNotShuffle.getPermutedIndex(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        expect(shuffledTwo.size).to.equal(0)
+
+        // list size of 3
+        modulus = 3
+        const shuffledThree = new Set<number>()
+        for (let i = 0; i < modulus; i++) {
+            shuffledThree.add(
+                (await getPermutedIndexRefsChecked(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        // |shuffledSet| = modulus
+        expect(shuffledThree.size).to.equal(modulus)
+        // set equality with optimised version
+        for (let i = 0; i < modulus; i++) {
+            shuffledThree.delete(
+                (await swapOrNotShuffle.getPermutedIndex(i, modulus, seed, rounds)).toNumber()
+            )
+        }
+        expect(shuffledThree.size).to.equal(0)
+    })
 })
