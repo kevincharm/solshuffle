@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "A smol collection of efficient, stateless shuffles written in Solidity/Yul.",
   "scripts": {
+    "plot:feistel": "python3 scripts/plot_feistel.py",
+    "plot:swapornot": "python3 scripts/plot_swap_or_not.py",
     "benchmark": "yarn hardhat run scripts/benchmark.ts",
     "check:format": "yarn prettier --check .",
     "format": "yarn prettier --write .",

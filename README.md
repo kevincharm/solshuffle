@@ -30,11 +30,19 @@ The Feistel shuffle is cheap, coming in at ~4350 gas to calculate a permutation 
 
 Feistel networks are based on _round functions_, and these are run a fixed number of times, as specified in the `rounds` parameter. As long as you input a cryptographically secure random `seed`, it is sufficient to set `rounds = 4` to make a _strong_ pseudorandom permutation [[1]](#m-luby-and-c-rackoff-1988).
 
+The figure below shows the distribution of shuffled indices (y-axis) against their original indices (x-axis) when picking $y \mid 0 \leq y \lt 1000$ with `modulus = 10_000`. Each colour represents a different run, with its own 32-byte cryptorandom seed. Every run sets `rounds = 4`. Re-run this for yourself with `yarn plot:feistel`.
+
+![feistel_1000_1000](https://user-images.githubusercontent.com/10385659/193012477-60f74cef-c7eb-4a91-ad93-30ee6c7ab4c6.png)
+
 ### `SwapOrNotShuffle`
 
 The swap-or-not shuffle is the algorithm used in ETH-PoS consensus clients. It is more expensive, coming in at ~34,000 gas to calculate a single permutation for a list size of 10,000.
 
 Each round of swap-or-not performs an index swap along a pivot. As explained in [this post](https://hackmd.io/@benjaminion/shuffling), the original paper [[2]](#v-t-hoang-2012) suggests setting $\text{rounds} = 6 \cdot lg{N}$ where $N$ is the length of the list to shuffle (i.e., `modulus` parameter). The [Ethereum annotated spec](https://github.com/ethereum/annotated-spec/blob/master/phase0/beacon-chain.md#misc) sets $\text{rounds} = 90$ to support a maximum validator list size of $2^{22}$.
+
+The figure below shows the distribution of shuffled indices (y-axis) against their original indices (x-axis) when picking $y \mid 0 \leq y \lt 1000$ with `modulus = 10_000`. Each colour represents a different run, with its own 32-byte cryptorandom seed. Every run sets `rounds = 90`. Re-run this for yourself with `yarn plot:swapornot`.
+
+![swapornot_1000_10000_100runs](https://user-images.githubusercontent.com/10385659/193012508-ce484f46-12f2-4af7-8ea5-0c4bfd5259f1.png)
 
 ### Gas Benchmarks
 
