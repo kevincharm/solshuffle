@@ -138,7 +138,7 @@ library FeistelShuffle {
                     }
                 }
                 default {
-                    if not(iszero(s)) {
+                    if and(not(iszero(s)), 1) {
                         // else if (s != 0)
                         z := 1
                     }
