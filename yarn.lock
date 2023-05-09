@@ -369,6 +369,11 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
+"@kevincharm/gfc-fpe@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@kevincharm/gfc-fpe/-/gfc-fpe-1.0.0.tgz#1216621fc405e53f3ef0436682a05b38f699f461"
+  integrity sha512-qbeCQuZB4z2NEuwEaxciFReJyxDoq94aMJqCJbcRjoNiaJUZuyXxo+tqmh8EXhypfDcu85HDk6zqqAQzWLNPKQ==
+
 "@metamask/eth-sig-util@^4.0.0":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@metamask/eth-sig-util/-/eth-sig-util-4.0.1.tgz#3ad61f6ea9ad73ba5b19db780d40d9aae5157088"

@@ -1,13 +1,8 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { BigNumber, BigNumberish } from 'ethers'
 import { randomBytes } from 'crypto'
-import {
-    ERC721Shuffled,
-    ERC721Shuffled__factory,
-    FeistelShuffle__factory,
-} from '../../typechain-types'
+import { ERC721Shuffled, ERC721Shuffled__factory } from '../../typechain-types'
 
 describe('ERC721Shuffled', () => {
     let deployer: SignerWithAddress
@@ -17,14 +12,12 @@ describe('ERC721Shuffled', () => {
     before(async () => {
         const signers = await ethers.getSigners()
         deployer = signers[0]
-        const feistelShuffleLibrary = await new FeistelShuffle__factory(deployer).deploy()
         maxSupply = 1000
-        erc721Shuffled = await new ERC721Shuffled__factory(
-            {
-                'contracts/FeistelShuffle.sol:FeistelShuffle': feistelShuffleLibrary.address,
-            },
-            deployer
-        ).deploy('My NFT contract', 'YEET', maxSupply)
+        erc721Shuffled = await new ERC721Shuffled__factory(deployer).deploy(
+            'My NFT contract',
+            'YEET',
+            maxSupply
+        )
         seed = ethers.utils.defaultAbiCoder.encode(
             ['bytes32'],
             ['0x' + randomBytes(32).toString('hex')]
