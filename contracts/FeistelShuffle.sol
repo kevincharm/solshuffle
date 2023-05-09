@@ -3,8 +3,7 @@ pragma solidity ^0.8;
 
 /// @title FeistelShuffle
 /// @author kevincharm
-/// @notice Implementation of a Feistel shuffle, adapted from vbuterin's python implementation [1].
-///     [1]: https://github.com/ethereum/research/blob/master/shuffling/feistel_shuffle.py
+/// @notice Lazy shuffling using generalised Feistel ciphers.
 library FeistelShuffle {
     /// @notice Integer sqrt (rounding down), adapted from uniswap/v2-core
     /// @param s integer to sqrt
@@ -38,7 +37,8 @@ library FeistelShuffle {
     }
 
     /// @notice Next perfect square
-    /// @param n Number to get next perfect square of
+    /// @param n Number to get next perfect square of, unless it's already a
+    ///     perfect square.
     function nextPerfectSquare(uint256 n) private pure returns (uint256) {
         uint256 sqrtN = sqrt(n);
         if (sqrtN ** 2 == n) {
@@ -48,12 +48,10 @@ library FeistelShuffle {
     }
 
     /// @notice Compute a Feistel shuffle mapping for index `x`
-    /// @dev This is the unoptimised/reference form intended for testing specs.
-    ///     Use #getPermutedIndex in your contract instead.
     /// @param x index of element in the list
-    /// @param domain cardinality of list
-    /// @param seed random seed
-    /// @param rounds number of hashing rounds
+    /// @param domain Number of elements in the list
+    /// @param seed Random seed; determines the permutation
+    /// @param rounds Number of Feistel rounds to perform
     /// @return resulting shuffled index
     function shuffle(
         uint256 x,
@@ -79,6 +77,14 @@ library FeistelShuffle {
         return x;
     }
 
+    /// @notice Compute the inverse Feistel shuffle mapping for the shuffled
+    ///     index `xPrime`
+    /// @param xPrime shuffled index of element in the list
+    /// @param domain Number of elements in the list
+    /// @param seed Random seed; determines the permutation
+    /// @param rounds Number of Feistel rounds that was performed in the
+    ///     original shuffle.
+    /// @return resulting shuffled index
     function deshuffle(
         uint256 xPrime,
         uint256 domain,

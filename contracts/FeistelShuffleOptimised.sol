@@ -5,6 +5,12 @@ pragma solidity ^0.8;
 /// @author kevincharm
 /// @notice Feistel shuffle implemented in Yul.
 library FeistelShuffleOptimised {
+    /// @notice Compute a Feistel shuffle mapping for index `x`
+    /// @param x index of element in the list
+    /// @param domain Number of elements in the list
+    /// @param seed Random seed; determines the permutation
+    /// @param rounds Number of Feistel rounds to perform
+    /// @return resulting shuffled index
     function shuffle(
         uint256 x,
         uint256 domain,
@@ -104,6 +110,14 @@ library FeistelShuffleOptimised {
         return x;
     }
 
+    /// @notice Compute the inverse Feistel shuffle mapping for the shuffled
+    ///     index `xPrime`
+    /// @param xPrime shuffled index of element in the list
+    /// @param domain Number of elements in the list
+    /// @param seed Random seed; determines the permutation
+    /// @param rounds Number of Feistel rounds that was performed in the
+    ///     original shuffle.
+    /// @return resulting shuffled index
     function deshuffle(
         uint256 xPrime,
         uint256 domain,
