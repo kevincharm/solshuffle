@@ -18,14 +18,7 @@
     "artifacts/contracts/**/*.json",
     "!artifacts/contracts/**/*.dbg.json"
   ],
-  "keywords": [
-    "solidity",
-    "stateless",
-    "shuffle",
-    "nft",
-    "random",
-    "raffle"
-  ],
+  "keywords": ["solidity", "stateless", "shuffle", "nft", "random", "raffle"],
   "author": "Kevin Charm <lucky@ape.engineer>",
   "license": "Apache-2.0",
   "dependencies": {},
@@ -48,7 +41,8 @@
     "ethers": "^5.4.7",
     "hardhat": "^2.11.2",
     "hardhat-gas-reporter": "^1.0.8",
-    "prettier-plugin-solidity": "^1.0.0-beta.24",
+    "prettier": "^2.8.8",
+    "prettier-plugin-solidity": "^1.1.3",
     "solidity-coverage": "^0.8.0",
     "ts-node": ">=8.0.0",
     "typechain": "^8.1.0",
