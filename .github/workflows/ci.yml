@@ -23,15 +23,6 @@ jobs:
       - name: install node deps
         run: yarn install --frozen-lockfile
 
-      - name: setup python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-          cache: pip
-
-      - name: install python deps
-        run: pip install -r requirements.txt
-
       - name: check formatting
         run: yarn check:format
 

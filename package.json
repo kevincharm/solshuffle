@@ -1,11 +1,8 @@
 {
   "name": "solshuffle",
   "version": "1.0.0",
-  "description": "A smol collection of efficient, stateless shuffles written in Solidity/Yul.",
+  "description": "Lazy, efficient & stateless shuffles powered by generalised Feistel ciphers written in Solidity/Yul.",
   "scripts": {
-    "plot:feistel": "python3 scripts/plot_feistel.py",
-    "plot:swapornot": "python3 scripts/plot_swap_or_not.py",
-    "benchmark": "yarn hardhat run scripts/benchmark.ts",
     "check:format": "yarn prettier --check .",
     "format": "yarn prettier --write .",
     "clean": "yarn hardhat clean",
@@ -18,7 +15,7 @@
     "artifacts/contracts/**/*.json",
     "!artifacts/contracts/**/*.dbg.json"
   ],
-  "keywords": ["solidity", "stateless", "shuffle", "nft", "random", "raffle"],
+  "keywords": ["solidity", "stateless", "shuffle", "feistel", "cipher", "fpe"],
   "author": "Kevin Charm <lucky@ape.engineer>",
   "license": "Apache-2.0",
   "dependencies": {},
