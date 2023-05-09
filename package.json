@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Lazy, efficient & stateless shuffles powered by generalised Feistel ciphers written in Solidity/Yul.",
   "scripts": {
+    "benchmark": "yarn hardhat run scripts/benchmark.ts",
     "check:format": "yarn prettier --check .",
     "format": "yarn prettier --write .",
     "clean": "yarn hardhat clean",

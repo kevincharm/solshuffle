@@ -74,6 +74,10 @@ library FeistelShuffleOptimised {
             // Allocate scratch memory for inputs to keccak256
             let packed := mload(0x40)
             mstore(0x40, add(packed, 0x80)) // 128B
+            // When calculating hashes for Feistel rounds, seed and domain
+            // do not change. So we can set them here just once.
+            mstore(add(packed, 0x40), seed)
+            mstore(add(packed, 0x60), domain)
             // Loop until x < domain
             for {
 
@@ -88,11 +92,9 @@ library FeistelShuffleOptimised {
                 } lt(i, rounds) {
                     i := add(i, 1)
                 } {
-                    // Load R and seed for next keccak256 round
+                    // Load R and i for next keccak256 round
                     mstore(packed, R)
                     mstore(add(packed, 0x20), i)
-                    mstore(add(packed, 0x40), seed)
-                    mstore(add(packed, 0x60), domain)
                     // roundHash <- keccak256([R, i, seed, domain])
                     let roundHash := keccak256(packed, 0x80)
                     // nextR <- (L + roundHash) % h
@@ -181,6 +183,10 @@ library FeistelShuffleOptimised {
             // Allocate scratch memory for inputs to keccak256
             let packed := mload(0x40)
             mstore(0x40, add(packed, 0x80)) // 128B
+            // When calculating hashes for Feistel rounds, seed and domain
+            // do not change. So we can set them here just once.
+            mstore(add(packed, 0x40), seed)
+            mstore(add(packed, 0x60), domain)
             // Loop until x < domain
             for {
 
@@ -195,12 +201,10 @@ library FeistelShuffleOptimised {
                 } lt(i, rounds) {
                     i := add(i, 1)
                 } {
-                    // Load L and seed for next keccak256 round
+                    // Load L and i for next keccak256 round
                     mstore(packed, L)
                     mstore(add(packed, 0x20), sub(sub(rounds, i), 1))
-                    mstore(add(packed, 0x40), seed)
-                    mstore(add(packed, 0x60), domain)
-                    // roundHash <- keccak256([R, i, seed, domain])
+                    // roundHash <- keccak256([L, i, seed, domain])
                     // NB: extra arithmetic to avoid underflow
                     let roundHash := mod(keccak256(packed, 0x80), h)
                     // nextL <- (R - roundHash) % h
