@@ -18,9 +18,7 @@ async function main() {
 
     const feistelResult = await benchmarkFeistel()
 
-    console.table({
-        Feistel: feistelResult,
-    })
+    console.table(feistelResult)
     console.log(`Finished in ${(performance.now() - begin) / (1000 * 60)}min.`)
 }
 
@@ -41,27 +39,60 @@ async function benchmarkFeistel() {
     const rounds = 4
     const seed = BigNumber.from('0x' + randomBytes(32).toString('hex'))
 
-    let minGas = BigNumber.from(2n ** 255n - 1n)
-    let maxGas = BigNumber.from(-(2n ** 255n - 1n))
-    let sumGasUsed = BigNumber.from(0)
+    let minGasUnopt = BigNumber.from(2n ** 255n - 1n)
+    let maxGasUnopt = BigNumber.from(-(2n ** 255n - 1n))
+    let sumGasUsedUnopt = BigNumber.from(0)
+    let minGasOpt = BigNumber.from(2n ** 255n - 1n)
+    let maxGasOpt = BigNumber.from(-(2n ** 255n - 1n))
+    let sumGasUsedOpt = BigNumber.from(0)
     for (let i = 0; i < indices.length; i++) {
         process.stdout.write(`Sending tx \x1B[33K${i}/${indices.length}\r`)
-        const tx = await deployer.sendTransaction(
-            await feistelShuffle.populateTransaction.shuffle__OPT(i, indices.length, seed, rounds)
-        )
-        const { gasUsed } = await tx.wait()
-        sumGasUsed = sumGasUsed.add(gasUsed)
-        if (gasUsed.gt(maxGas)) {
-            maxGas = gasUsed
+        // Optimised function
+        const gasUsedOpt = await deployer
+            .sendTransaction(
+                await feistelShuffle.populateTransaction.shuffle__OPT(
+                    i,
+                    indices.length,
+                    seed,
+                    rounds
+                )
+            )
+            .then((tx) => tx.wait())
+            .then((receipt) => receipt.gasUsed)
+        sumGasUsedOpt = sumGasUsedOpt.add(gasUsedOpt)
+        if (gasUsedOpt.gt(maxGasOpt)) {
+            maxGasOpt = gasUsedOpt
         }
-        if (gasUsed.lt(minGas)) {
-            minGas = gasUsed
+        if (gasUsedOpt.lt(minGasOpt)) {
+            minGasOpt = gasUsedOpt
+        }
+        // Un-ptimised function
+        const gasUsedUnopt = await deployer
+            .sendTransaction(
+                await feistelShuffle.populateTransaction.shuffle(i, indices.length, seed, rounds)
+            )
+            .then((tx) => tx.wait())
+            .then((receipt) => receipt.gasUsed)
+        sumGasUsedUnopt = sumGasUsedUnopt.add(gasUsedUnopt)
+        if (gasUsedUnopt.gt(maxGasUnopt)) {
+            maxGasUnopt = gasUsedUnopt
+        }
+        if (gasUsedUnopt.lt(minGasUnopt)) {
+            minGasUnopt = gasUsedUnopt
         }
     }
     return {
-        rounds,
-        min: minGas.sub(21000).toNumber(),
-        max: maxGas.sub(21000).toNumber(),
-        avg: sumGasUsed.div(indices.length).sub(21000).toNumber(),
+        FeistelShuffleOptimised: {
+            rounds,
+            min: minGasOpt.sub(21000).toNumber(),
+            max: maxGasOpt.sub(21000).toNumber(),
+            avg: sumGasUsedOpt.div(indices.length).sub(21000).toNumber(),
+        },
+        FeistelShuffle: {
+            rounds,
+            min: minGasUnopt.sub(21000).toNumber(),
+            max: maxGasUnopt.sub(21000).toNumber(),
+            avg: sumGasUsedUnopt.div(indices.length).sub(21000).toNumber(),
+        },
     }
 }
