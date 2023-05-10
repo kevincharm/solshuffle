@@ -47,13 +47,12 @@ The figure below shows the distribution of shuffled indices (y-axis) against the
 ### Gas Benchmarks
 
 ```
-modulus = 10_000
-┌───────────┬────────┬───────┬───────┬───────┐
-│  shuffle  │ rounds │  min  │  max  │  avg  │
-├───────────┼────────┼───────┼───────┼───────┤
-│  Feistel  │   4    │ 4326  │ 4350  │ 4349  │
-│ SwapOrNot │   90   │ 33342 │ 34550 │ 33993 │
-└───────────┴────────┴───────┴───────┴───────┘
+domain = 96_722
+┌─────────┬────────┬──────┬──────┬──────┐
+│ (index) │ rounds │ min  │ max  │ avg  │
+├─────────┼────────┼──────┼──────┼──────┤
+│ Feistel │   4    │ 3996 │ 5500 │ 4028 │
+└─────────┴────────┴──────┴──────┴──────┘
 ```
 
 ## OK ANON, I'M CONVINCED. WHERE DO I APE?
