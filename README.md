@@ -48,11 +48,12 @@ The figure below shows the distribution of shuffled indices (y-axis) against the
 
 ```
 domain = 96_722
-┌─────────┬────────┬──────┬──────┬──────┐
-│ (index) │ rounds │ min  │ max  │ avg  │
-├─────────┼────────┼──────┼──────┼──────┤
-│ Feistel │   4    │ 3996 │ 5500 │ 4028 │
-└─────────┴────────┴──────┴──────┴──────┘
+┌─────────────────────────┬────────┬──────┬───────┬──────┐
+│         (index)         │ rounds │ min  │  max  │ avg  │
+├─────────────────────────┼────────┼──────┼───────┼──────┤
+│ FeistelShuffleOptimised │   4    │ 4008 │ 5430  │ 4040 │
+│     FeistelShuffle      │   4    │ 7255 │ 11786 │ 7297 │
+└─────────────────────────┴────────┴──────┴───────┴──────┘
 ```
 
 ## OK ANON, I'M CONVINCED. WHERE DO I APE?
