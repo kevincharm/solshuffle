@@ -5,6 +5,8 @@ pragma solidity ^0.8;
 /// @author kevincharm
 /// @notice Feistel shuffle implemented in Yul.
 library FeistelShuffleOptimised {
+    error InvalidInputs();
+
     /// @notice Compute a Feistel shuffle mapping for index `x`
     /// @param x index of element in the list
     /// @param domain Number of elements in the list
@@ -17,18 +19,14 @@ library FeistelShuffleOptimised {
         uint256 seed,
         uint256 rounds
     ) internal pure returns (uint256) {
-        assembly {
-            // Assert some preconditions
-            // (x < domain): index to be permuted must lie within the domain of [0, domain)
-            let xGtedomain := gt(x, sub(domain, 1))
-            // (domain != 0): domain must be non-zero (value of 1 also doesn't really make sense)
-            let domainZero := iszero(domain)
-            // (rounds is even): we only handle even rounds to make the code simpler
-            let oddRounds := iszero(iszero(and(rounds, 1)))
-            if or(or(xGtedomain, domainZero), oddRounds) {
-                revert(0, 0)
-            }
+        // (domain != 0): domain must be non-zero (value of 1 also doesn't really make sense)
+        // (xPrime < domain): index to be permuted must lie within the domain of [0, domain)
+        // (rounds is even): we only handle even rounds to make the code simpler
+        if (domain == 0 || x >= domain || rounds & 1 == 1) {
+            revert InvalidInputs();
+        }
 
+        assembly {
             // Calculate sqrt(s) using Babylonian method
             function sqrt(s) -> z {
                 switch gt(s, 3)
@@ -126,18 +124,14 @@ library FeistelShuffleOptimised {
         uint256 seed,
         uint256 rounds
     ) internal pure returns (uint256) {
-        assembly {
-            // Assert some preconditions
-            // (xPrime < domain): index to be permuted must lie within the domain of [0, domain)
-            let xGtedomain := gt(xPrime, sub(domain, 1))
-            // (domain != 0): domain must be non-zero (value of 1 also doesn't really make sense)
-            let domainZero := iszero(domain)
-            // (rounds is even): we only handle even rounds to make the code simpler
-            let oddRounds := iszero(iszero(and(rounds, 1)))
-            if or(or(xGtedomain, domainZero), oddRounds) {
-                revert(0, 0)
-            }
+        // (domain != 0): domain must be non-zero (value of 1 also doesn't really make sense)
+        // (xPrime < domain): index to be permuted must lie within the domain of [0, domain)
+        // (rounds is even): we only handle even rounds to make the code simpler
+        if (domain == 0 || xPrime >= domain || rounds & 1 == 1) {
+            revert InvalidInputs();
+        }
 
+        assembly {
             // Calculate sqrt(s) using Babylonian method
             function sqrt(s) -> z {
                 switch gt(s, 3)
@@ -204,7 +198,7 @@ library FeistelShuffleOptimised {
                     // Load L and i for next keccak256 round
                     mstore(packed, L)
                     mstore(add(packed, 0x20), sub(sub(rounds, i), 1))
-                    // roundHash <- keccak256([L, i, seed, domain])
+                    // roundHash <- keccak256([L, rounds - i - 1, seed, domain])
                     // NB: extra arithmetic to avoid underflow
                     let roundHash := mod(keccak256(packed, 0x80), h)
                     // nextL <- (R - roundHash) % h
