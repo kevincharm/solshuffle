@@ -15,8 +15,17 @@
     "node": ">=18.0.0 <19"
   },
   "packageManager": "yarn@1.22.22",
-  "files": ["contracts/**/*.sol"],
-  "keywords": ["solidity", "stateless", "shuffle", "feistel", "cipher", "fpe"],
+  "files": [
+    "contracts/**/*.sol"
+  ],
+  "keywords": [
+    "solidity",
+    "stateless",
+    "shuffle",
+    "feistel",
+    "cipher",
+    "fpe"
+  ],
   "author": "Kevin Charm <kevin@kevincharm.com>",
   "repository": {
     "type": "git",
