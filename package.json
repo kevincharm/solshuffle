@@ -1,6 +1,6 @@
 {
   "name": "solshuffle",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lazy, efficient & stateless shuffles powered by generalised Feistel ciphers written in Solidity/Yul.",
   "scripts": {
     "benchmark": "yarn hardhat run scripts/benchmark.ts",
