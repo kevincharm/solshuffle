@@ -26,13 +26,13 @@ Find the accompanying TypeScript library (and reference implementation) [here](h
 
 > Difficulty level: SHADOWY SUPER CODER 🥷
 
-Shown below is a truncated example of how you'd shuffle your ERC721 metadata using the `FeistelShuffle` library, after calling VRF (or whatever CSPRNG, idgaf) to set a `randomSeed`.
+Shown below is a truncated example of how you'd shuffle your ERC721 metadata using the `FeistelShuffleOptimised` library, after calling a VRF (or whatever) to set a `randomSeed`.
 
 ```solidity
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ERC721Enumerable } from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import { FeistelShuffle } from "@kevincharm/solshuffle/contracts/FeistelShuffle.sol";
+import { FeistelShuffleOptimised } from "solshuffle/contracts/FeistelShuffleOptimised.sol";
 
 contract ERC721Shuffled is ERC721, ERC721Enumerable {
     using Strings for uint256;
@@ -58,7 +58,7 @@ contract ERC721Shuffled is ERC721, ERC721Enumerable {
         // statelessly map tokenId -> shuffled tokenId,
         // deterministically according to the `randomSeed` and `rounds` parameters
         uint256 shuffledTokenId = FIRST_TOKEN_ID +
-            FeistelShuffle.shuffle(
+            FeistelShuffleOptimised.shuffle(
                 tokenId -
                     FIRST_TOKEN_ID /** shuffle is 0-indexed, so we add offsets */,
                 maxSupply /** Must stay constant */,
