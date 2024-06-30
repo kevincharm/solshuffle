@@ -1,10 +1,6 @@
-```diff
-- THESE CONTRACTS ARE NOT AUDITED NFA DYOR WAGMI 🫡🫡🫡
-```
-
 # 🃏 solshuffle 🃏
 
-A smol collection of efficient, stateless shuffles written in Solidity/Yul adapted from [ethereum/research](https://github.com/ethereum/research/tree/master/shuffling).
+Gas-efficient stateless shuffle implemented in Solidity/Yul, for all your onchain permutation needs.
 
 👇👇👇👇👇👇👇👇👇👇👇👇👇👇👇
 
@@ -14,49 +10,17 @@ A smol collection of efficient, stateless shuffles written in Solidity/Yul adapt
 
 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
 
-## STATELESS SHUFFLES? WUTCHU TALKIN BOUT WILLIS?
+## 1) What
 
-**FOR TOO LONG** have the beeple suffered trust-based off-chain raffling and lame token ID offsets passed off as ✌️"shuffles"✌️ (lookin at you, NFT devs). The predominant reason being that it costs too much gas to shuffle on-chain using a naïve algorithm that picks random elements 1-by-1 from a list or using the Fisher-Yates shuffle.
+You've probably tried writing a raffle in Solidity. How much does it cost to pick 10 winners? 100? 1000? Probably millions of gas. Using `solshuffle`, you can determine the draw sequence of the user at the time of claiming. Combine this with a Merkle tree and you can have extremely efficient raffles (think cutting 10M gas down to <100k gas). Check out [my talk at EthCC](https://www.youtube.com/watch?v=d7C1pLKM_Oc) to learn how you can do extremely gas-efficient raffles with the [Lazy Merkle Raffle](https://docs.fairy.dev/theory/lazy-merkle-raffle).
 
-**NO LONGER❗️** Now you, too, can have CHEAP💰 SECURE🔒 INSTANT⏰ shuffles in your smart contracts. You can thank our Lord and Saviour Vitalik for doing research on shuffling for ETH-PoS block proposer selection. Shoutout to [@rpal\_](https://twitter.com/rpal_) for shilling me these cool shuffle algos :^)
+Another application for `solshuffle` is to shuffle NFT token identifiers. You've probably seen NFT contracts that simply add a randomised offset and call that a "shuffle". Now you can stop faking it and actually shuffle your token identifiers.
 
-## ROLL THE DICE, YOU ABSOLUTE DEGENERATE
+Shoutout to [@rpal\_](https://twitter.com/rpal_) for shilling me cool shuffle algos!
 
-You have a choice between:
+Find the accompanying TypeScript library (and reference implementation) [here](https://github.com/kevincharm/gfc-fpe).
 
-### `FeistelShuffle`
-
-The Feistel shuffle is cheap, coming in at ~4350 gas to calculate a permutation for a single index for a list size of 10,000.
-
-Feistel networks are based on _round functions_, and these are run a fixed number of times, as specified in the `rounds` parameter. As long as you input a cryptographically secure random `seed`, it is sufficient to set `rounds = 4` to make a _strong_ pseudorandom permutation [[1]](#m-luby-and-c-rackoff-1988).
-
-The figure below shows the distribution of shuffled indices (y-axis) against their original indices (x-axis) when picking $y \mid 0 \leq y \lt 1000$ with `modulus = 10_000`. Each colour represents a different run, with its own 32-byte cryptorandom seed. Every run sets `rounds = 4`. Re-run this for yourself with `yarn plot:feistel`.
-
-![feistel_1000_1000](https://user-images.githubusercontent.com/10385659/193012477-60f74cef-c7eb-4a91-ad93-30ee6c7ab4c6.png)
-
-### `SwapOrNotShuffle`
-
-The swap-or-not shuffle is the algorithm used in ETH-PoS consensus clients. It is more expensive, coming in at ~34,000 gas to calculate a single permutation for a list size of 10,000.
-
-Each round of swap-or-not performs an index swap along a pivot. As explained in [this post](https://hackmd.io/@benjaminion/shuffling), the original paper [[2]](#v-t-hoang-2012) suggests setting $\text{rounds} = 6 \cdot lg{N}$ where $N$ is the length of the list to shuffle (i.e., `modulus` parameter). The [Ethereum annotated spec](https://github.com/ethereum/annotated-spec/blob/master/phase0/beacon-chain.md#misc) sets $\text{rounds} = 90$ to support a maximum validator list size of $2^{22}$.
-
-The figure below shows the distribution of shuffled indices (y-axis) against their original indices (x-axis) when picking $y \mid 0 \leq y \lt 1000$ with `modulus = 10_000`. Each colour represents a different run, with its own 32-byte cryptorandom seed. Every run sets `rounds = 90`. Re-run this for yourself with `yarn plot:swapornot`.
-
-![swapornot_1000_10000_100runs](https://user-images.githubusercontent.com/10385659/193012508-ce484f46-12f2-4af7-8ea5-0c4bfd5259f1.png)
-
-### Gas Benchmarks
-
-```
-modulus = 10_000
-┌───────────┬────────┬───────┬───────┬───────┐
-│  shuffle  │ rounds │  min  │  max  │  avg  │
-├───────────┼────────┼───────┼───────┼───────┤
-│  Feistel  │   4    │ 4326  │ 4350  │ 4349  │
-│ SwapOrNot │   90   │ 33342 │ 34550 │ 33993 │
-└───────────┴────────┴───────┴───────┴───────┘
-```
-
-## OK ANON, I'M CONVINCED. WHERE DO I APE?
+## Usage
 
 ### Example: Just-in-time NFT tokenId<->metadata shuffle
 
@@ -85,23 +49,20 @@ contract ERC721Shuffled is ERC721, ERC721Enumerable {
     ///     is called
     /// @param tokenId token id
     /// @return URI pointing to metadata
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         require(randomSeed != 0, "random seed must be initialised!!!");
         _requireMinted(tokenId);
 
         // statelessly map tokenId -> shuffled tokenId,
         // deterministically according to the `randomSeed` and `rounds` parameters
         uint256 shuffledTokenId = FIRST_TOKEN_ID +
-            FeistelShuffle.getPermutedIndex(
-                tokenId - FIRST_TOKEN_ID, /** shuffle is 0-indexed, so we add offsets */
-                maxSupply, /** Must stay constant */
-                uint256(randomSeed), /** Must stay constant (once set) */
+            FeistelShuffle.shuffle(
+                tokenId -
+                    FIRST_TOKEN_ID /** shuffle is 0-indexed, so we add offsets */,
+                maxSupply /** Must stay constant */,
+                uint256(randomSeed) /** Must stay constant (once set) */,
                 4 /** Must stay constant */
             );
 
@@ -109,16 +70,45 @@ contract ERC721Shuffled is ERC721, ERC721Enumerable {
         return string(abi.encodePacked(_baseURI(), shuffledTokenId.toString()));
     }
 }
+```
+
+## Specifications
+
+The stateless shuffle implemented by `solshuffle` is the Generalised Feistel Cipher, but we'll just call it the Feistel Shuffle. The Feistel shuffle is cheap, coming in at ~4350 gas to calculate a permutation for a single index for a list size of 10,000.
+
+Feistel networks are based on _round functions_, and these are run a fixed number of times, as specified in the `rounds` parameter. As long as you input a cryptographically secure random `seed`, it is sufficient to set `rounds = 4` to make a _strong_ pseudorandom permutation [[1]](#m-luby-and-c-rackoff-1988).
+
+The figure below shows the distribution of shuffled indices (y-axis) against their original indices (x-axis) when picking $y \mid 0 \leq y \lt 1000$ with `modulus = 10_000`. Each colour represents a different run, with its own 32-byte cryptorandom seed. Every run sets `rounds = 4`. Re-run this for yourself with `yarn plot:feistel`.
+
+![feistel_1000_1000](https://user-images.githubusercontent.com/10385659/193012477-60f74cef-c7eb-4a91-ad93-30ee6c7ab4c6.png)
+
+### Gas Benchmarks
 
 ```
+domain = 96_722
+┌─────────────────────────┬────────┬──────┬───────┬──────┐
+│         (index)         │ rounds │ min  │  max  │ avg  │
+├─────────────────────────┼────────┼──────┼───────┼──────┤
+│ FeistelShuffleOptimised │   4    │ 4008 │ 5430  │ 4040 │
+│     FeistelShuffle      │   4    │ 7255 │ 11786 │ 7297 │
+└─────────────────────────┴────────┴──────┴───────┴──────┘
+```
+
+## Security
+
+This repository has not received an individual security audit. However, both `FeistelShuffle.sol` and `FeistelShuffleOptimised.sol` were audited by Trail of Bits as part of the Ethereum Foundation's [Devcon Auction-Raffle contracts](https://github.com/efdevcon/devcon-raffle). [View the audit here](https://github.com/efdevcon/devcon-raffle/blob/849ad0b18e48a10900c37a5275e5b16b997abf59/audits/Ethereum%20Foundation%20Devcon%20Auction-Raffle%20Summary%20Report.pdf).
+
+## License
+
+This library is permissively licenced with the MIT license. Send tokens to `kevincharm.eth` if you find the library useful for your project :^)
+
+## Disclaimer
+
+Ensure you understand the theory behind the [Generalised Feistel Cipher](https://github.com/kevincharm/gfc-fpe/blob/master/README.md), such as the iteration upper bounds, which may consume more gas than the expected average in unlucky scenarios.
 
 ## WEN TOKEN?
 
 soon™
-
-## License
-
-This library is permissively licenced with the Apache 2.0 license. Additionally, you must send 1% of the gross revenue from your mint to `kevincharm.eth` if you use this library in your NFT project. This is enforced by code when you import the library, just like sudoswap is forced to pay out royalties to NFT contracts that implement EIP-2981.
 
 ## References
 

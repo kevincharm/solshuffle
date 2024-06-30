@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -43,23 +43,20 @@ contract ERC721Shuffled is ERC721, ERC721Enumerable, Ownable {
     ///     is called
     /// @param tokenId token id
     /// @return URI pointing to metadata
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         require(randomSeed != 0, "random seed must be initialised!!!");
         _requireMinted(tokenId);
 
         // statelessly map tokenId -> shuffled tokenId,
         // deterministically according to the `randomSeed` and `rounds` parameters
         uint256 shuffledTokenId = FIRST_TOKEN_ID +
-            FeistelShuffle.getPermutedIndex(
-                tokenId - FIRST_TOKEN_ID, /** shuffle is 0-indexed, so we add offsets */
-                maxSupply, /** Must stay constant */
-                uint256(randomSeed), /** Must stay constant (once set) */
+            FeistelShuffle.shuffle(
+                tokenId -
+                    FIRST_TOKEN_ID /** shuffle is 0-indexed, so we add offsets */,
+                maxSupply /** Must stay constant */,
+                uint256(randomSeed) /** Must stay constant (once set) */,
                 4 /** Must stay constant */
             );
 
@@ -73,13 +70,9 @@ contract ERC721Shuffled is ERC721, ERC721Enumerable, Ownable {
     }
 
     /// @dev Required override
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC721, ERC721Enumerable)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
