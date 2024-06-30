@@ -14,7 +14,7 @@
   "files": ["contracts/**/*.sol"],
   "keywords": ["solidity", "stateless", "shuffle", "feistel", "cipher", "fpe"],
   "author": "Kevin Charm <kevin@kevincharm.com>",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
