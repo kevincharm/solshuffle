@@ -1,11 +1,6 @@
 name: CI
 on: [push]
 
-env:
-  MAINNET_URL: ${{ secrets.MAINNET_URL }}
-  MAINNET_PK: ${{ secrets.MAINNET_PK }}
-  ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-
 jobs:
   test:
     name: hardhat tests
@@ -18,7 +13,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           cache: yarn
-          node-version: 16
+          node-version: 18
 
       - name: install node deps
         run: yarn install --frozen-lockfile

@@ -11,6 +11,10 @@
     "test": "yarn hardhat test",
     "prepack": "yarn clean && yarn check:format && yarn test && yarn build"
   },
+  "engines": {
+    "node": ">=18.0.0 <19"
+  },
+  "packageManager": "yarn@1.22.22",
   "files": ["contracts/**/*.sol"],
   "keywords": ["solidity", "stateless", "shuffle", "feistel", "cipher", "fpe"],
   "author": "Kevin Charm <kevin@kevincharm.com>",
