@@ -11,18 +11,13 @@
     "test": "yarn hardhat test",
     "prepack": "yarn clean && yarn check:format && yarn test && yarn build"
   },
-  "files": [
-    "contracts/**/*.sol"
-  ],
-  "keywords": [
-    "solidity",
-    "stateless",
-    "shuffle",
-    "feistel",
-    "cipher",
-    "fpe"
-  ],
+  "files": ["contracts/**/*.sol"],
+  "keywords": ["solidity", "stateless", "shuffle", "feistel", "cipher", "fpe"],
   "author": "Kevin Charm <kevin@kevincharm.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevincharm/solshuffle.git"
+  },
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
