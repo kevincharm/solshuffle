@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers'
 import { ethers } from 'hardhat'
 import { FeistelShuffleConsumer__factory } from '../typechain-types'
 import { randomBytes } from 'crypto'
@@ -37,20 +36,20 @@ async function benchmarkFeistel() {
 
     // params
     const rounds = 4
-    const seed = BigNumber.from('0x' + randomBytes(32).toString('hex'))
+    const seed = BigInt('0x' + randomBytes(32).toString('hex'))
 
-    let minGasUnopt = BigNumber.from(2n ** 255n - 1n)
-    let maxGasUnopt = BigNumber.from(-(2n ** 255n - 1n))
-    let sumGasUsedUnopt = BigNumber.from(0)
-    let minGasOpt = BigNumber.from(2n ** 255n - 1n)
-    let maxGasOpt = BigNumber.from(-(2n ** 255n - 1n))
-    let sumGasUsedOpt = BigNumber.from(0)
+    let minGasUnopt = BigInt(2n ** 255n - 1n)
+    let maxGasUnopt = BigInt(-(2n ** 255n - 1n))
+    let sumGasUsedUnopt = BigInt(0)
+    let minGasOpt = BigInt(2n ** 255n - 1n)
+    let maxGasOpt = BigInt(-(2n ** 255n - 1n))
+    let sumGasUsedOpt = BigInt(0)
     for (let i = 0; i < indices.length; i++) {
         process.stdout.write(`Sending tx \x1B[33K${i}/${indices.length}\r`)
         // Optimised function
         const gasUsedOpt = await deployer
             .sendTransaction(
-                await feistelShuffle.populateTransaction.shuffle__OPT(
+                await feistelShuffle.shuffle__OPT.populateTransaction(
                     i,
                     indices.length,
                     seed,
@@ -58,41 +57,41 @@ async function benchmarkFeistel() {
                 )
             )
             .then((tx) => tx.wait())
-            .then((receipt) => receipt.gasUsed)
-        sumGasUsedOpt = sumGasUsedOpt.add(gasUsedOpt)
-        if (gasUsedOpt.gt(maxGasOpt)) {
+            .then((receipt) => receipt!.gasUsed)
+        sumGasUsedOpt = sumGasUsedOpt + gasUsedOpt
+        if (gasUsedOpt > maxGasOpt) {
             maxGasOpt = gasUsedOpt
         }
-        if (gasUsedOpt.lt(minGasOpt)) {
+        if (gasUsedOpt < minGasOpt) {
             minGasOpt = gasUsedOpt
         }
         // Un-ptimised function
         const gasUsedUnopt = await deployer
             .sendTransaction(
-                await feistelShuffle.populateTransaction.shuffle(i, indices.length, seed, rounds)
+                await feistelShuffle.shuffle.populateTransaction(i, indices.length, seed, rounds)
             )
             .then((tx) => tx.wait())
-            .then((receipt) => receipt.gasUsed)
-        sumGasUsedUnopt = sumGasUsedUnopt.add(gasUsedUnopt)
-        if (gasUsedUnopt.gt(maxGasUnopt)) {
+            .then((receipt) => receipt!.gasUsed)
+        sumGasUsedUnopt = sumGasUsedUnopt + gasUsedUnopt
+        if (gasUsedUnopt > maxGasUnopt) {
             maxGasUnopt = gasUsedUnopt
         }
-        if (gasUsedUnopt.lt(minGasUnopt)) {
+        if (gasUsedUnopt < minGasUnopt) {
             minGasUnopt = gasUsedUnopt
         }
     }
     return {
         FeistelShuffleOptimised: {
             rounds,
-            min: minGasOpt.sub(21000).toNumber(),
-            max: maxGasOpt.sub(21000).toNumber(),
-            avg: sumGasUsedOpt.div(indices.length).sub(21000).toNumber(),
+            min: Number(minGasOpt - 21000n),
+            max: Number(maxGasOpt - 21000n),
+            avg: Number(sumGasUsedOpt / BigInt(indices.length) - 21000n),
         },
         FeistelShuffle: {
             rounds,
-            min: minGasUnopt.sub(21000).toNumber(),
-            max: maxGasUnopt.sub(21000).toNumber(),
-            avg: sumGasUsedUnopt.div(indices.length).sub(21000).toNumber(),
+            min: Number(minGasUnopt - 21000n),
+            max: Number(maxGasUnopt - 21000n),
+            avg: Number(sumGasUsedUnopt / BigInt(indices.length) - 21000n),
         },
     }
 }

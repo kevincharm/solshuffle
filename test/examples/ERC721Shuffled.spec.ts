@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { randomBytes } from 'crypto'
 import { ERC721Shuffled, ERC721Shuffled__factory } from '../../typechain-types'
 
@@ -18,7 +18,7 @@ describe('ERC721Shuffled', () => {
             'YEET',
             maxSupply
         )
-        seed = ethers.utils.defaultAbiCoder.encode(
+        seed = ethers.AbiCoder.defaultAbiCoder().encode(
             ['bytes32'],
             ['0x' + randomBytes(32).toString('hex')]
         )

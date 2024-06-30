@@ -1,16 +1,14 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { FeistelShuffleConsumer, FeistelShuffleConsumer__factory } from '../typechain-types'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { BigNumber, BigNumberish } from 'ethers'
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { BigNumberish } from 'ethers'
 import { randomBytes } from 'crypto'
 import * as tsFeistel from '@kevincharm/gfc-fpe'
-import { solidityKeccak256 } from 'ethers/lib/utils'
+const solidityKeccak256 = ethers.solidityPackedKeccak256
 
 const f = (R: bigint, i: bigint, seed: bigint, domain: bigint) =>
-    BigNumber.from(
-        solidityKeccak256(['uint256', 'uint256', 'uint256', 'uint256'], [R, i, seed, domain])
-    ).toBigInt()
+    BigInt(solidityKeccak256(['uint256', 'uint256', 'uint256', 'uint256'], [R, i, seed, domain]))
 
 describe('FeistelShuffle', () => {
     let deployer: SignerWithAddress
@@ -24,7 +22,7 @@ describe('FeistelShuffle', () => {
         indices = Array(100)
             .fill(0)
             .map((_, i) => i)
-        seed = ethers.utils.defaultAbiCoder.encode(
+        seed = ethers.AbiCoder.defaultAbiCoder().encode(
             ['bytes32'],
             ['0x' + randomBytes(32).toString('hex')]
         )
@@ -61,10 +59,10 @@ describe('FeistelShuffle', () => {
     ) {
         const contractRefAnswer = await feistelShuffle.shuffle(x, domain, seed, rounds)
         const refAnswer = await tsFeistel.encrypt(
-            BigNumber.from(x).toBigInt(),
-            BigNumber.from(domain).toBigInt(),
-            BigNumber.from(seed).toBigInt(),
-            BigNumber.from(rounds).toBigInt(),
+            BigInt(x),
+            BigInt(domain),
+            BigInt(seed),
+            BigInt(rounds),
             f
         )
         expect(contractRefAnswer).to.equal(refAnswer)
@@ -78,41 +76,41 @@ describe('FeistelShuffle', () => {
 
     it('should create permutation with FeistelShuffle', async () => {
         const rounds = 4
-        const shuffled: BigNumber[] = []
+        const shuffled: bigint[] = []
         for (let i = 0; i < indices.length; i++) {
             const s = await feistelShuffle.shuffle__OPT(i, indices.length, seed, rounds)
             shuffled.push(s)
         }
         assertSetEquality(
             indices,
-            shuffled.map((s) => s.toNumber())
+            shuffled.map((s) => Number(s))
         )
 
         // GASSSS
-        let sumGasUsed = BigNumber.from(0)
-        let maxGasUsed = BigNumber.from(0)
+        let sumGasUsed = 0n
+        let maxGasUsed = 0n
         for (let i = 0; i < indices.length; i++) {
             const _txSingle = await deployer.sendTransaction(
-                await feistelShuffle.populateTransaction.shuffle(i, indices.length, seed, rounds)
+                await feistelShuffle.shuffle.populateTransaction(i, indices.length, seed, rounds)
             )
-            const txSingle = await _txSingle.wait()
+            const txSingle = (await _txSingle.wait())!
             const _txSingleOpt = await deployer.sendTransaction(
-                await feistelShuffle.populateTransaction.shuffle__OPT(
+                await feistelShuffle.shuffle__OPT.populateTransaction(
                     i,
                     indices.length,
                     seed,
                     rounds
                 )
             )
-            const txSingleOpt = await _txSingleOpt.wait()
+            const txSingleOpt = (await _txSingleOpt.wait())!
             expect(txSingleOpt.gasUsed).to.be.lessThan(txSingle.gasUsed)
-            const actualGasUsed = txSingleOpt.gasUsed.sub(21_000)
-            if (actualGasUsed.gt(maxGasUsed)) {
+            const actualGasUsed = txSingleOpt.gasUsed - 21_000n
+            if (actualGasUsed > maxGasUsed) {
                 maxGasUsed = actualGasUsed
             }
-            sumGasUsed = sumGasUsed.add(actualGasUsed)
+            sumGasUsed = sumGasUsed + actualGasUsed
         }
-        const averageGasUsed = sumGasUsed.div(indices.length)
+        const averageGasUsed = sumGasUsed / BigInt(indices.length)
         // console.log('Feistel avg gas:', averageGasUsed)
         expect(averageGasUsed).to.be.lessThanOrEqual(3450) // <-- AVG gas
         // console.log('Feistel max gas:', maxGasUsed)
@@ -128,7 +126,7 @@ describe('FeistelShuffle', () => {
             // Test that optimised Yul version spits out the same output
             const sOpt = await feistelShuffle.shuffle__OPT(i, indices.length, seed, rounds)
             expect(s).to.equal(sOpt)
-            shuffled.push(sOpt.toNumber())
+            shuffled.push(Number(sOpt))
         }
 
         const specOutput: bigint[] = []
@@ -136,8 +134,8 @@ describe('FeistelShuffle', () => {
             const xPrime = await tsFeistel.encrypt(
                 BigInt(index),
                 BigInt(indices.length),
-                BigNumber.from(seed).toBigInt(),
-                BigNumber.from(rounds).toBigInt(),
+                BigInt(seed),
+                BigInt(rounds),
                 f
             )
             specOutput.push(xPrime)
@@ -182,15 +180,13 @@ describe('FeistelShuffle', () => {
         modulus = 2
         const shuffledTwo = new Set<number>()
         for (let i = 0; i < modulus; i++) {
-            shuffledTwo.add((await checkedShuffle(i, modulus, seed, rounds)).toNumber())
+            shuffledTwo.add(Number(await checkedShuffle(i, modulus, seed, rounds)))
         }
         // |shuffledSet| = modulus
         expect(shuffledTwo.size).to.equal(modulus)
         // set equality with optimised version
         for (let i = 0; i < modulus; i++) {
-            shuffledTwo.delete(
-                (await feistelShuffle.shuffle__OPT(i, modulus, seed, rounds)).toNumber()
-            )
+            shuffledTwo.delete(Number(await feistelShuffle.shuffle__OPT(i, modulus, seed, rounds)))
         }
         expect(shuffledTwo.size).to.equal(0)
 
@@ -198,14 +194,14 @@ describe('FeistelShuffle', () => {
         modulus = 3
         const shuffledThree = new Set<number>()
         for (let i = 0; i < modulus; i++) {
-            shuffledThree.add((await checkedShuffle(i, modulus, seed, rounds)).toNumber())
+            shuffledThree.add(Number(await checkedShuffle(i, modulus, seed, rounds)))
         }
         // |shuffledSet| = modulus
         expect(shuffledThree.size).to.equal(modulus)
         // set equality with optimised version
         for (let i = 0; i < modulus; i++) {
             shuffledThree.delete(
-                (await feistelShuffle.shuffle__OPT(i, modulus, seed, rounds)).toNumber()
+                Number(await feistelShuffle.shuffle__OPT(i, modulus, seed, rounds))
             )
         }
         expect(shuffledThree.size).to.equal(0)
@@ -214,15 +210,13 @@ describe('FeistelShuffle', () => {
         modulus = 4
         const shuffledFour = new Set<number>()
         for (let i = 0; i < modulus; i++) {
-            shuffledFour.add((await checkedShuffle(i, modulus, seed, rounds)).toNumber())
+            shuffledFour.add(Number(await checkedShuffle(i, modulus, seed, rounds)))
         }
         // |shuffledSet| = modulus
         expect(shuffledFour.size).to.equal(modulus)
         // set equality with optimised version
         for (let i = 0; i < modulus; i++) {
-            shuffledFour.delete(
-                (await feistelShuffle.shuffle__OPT(i, modulus, seed, rounds)).toNumber()
-            )
+            shuffledFour.delete(Number(await feistelShuffle.shuffle__OPT(i, modulus, seed, rounds)))
         }
         expect(shuffledFour.size).to.equal(0)
     })
