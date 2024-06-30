@@ -11,13 +11,9 @@
     "test": "yarn hardhat test",
     "prepack": "yarn clean && yarn check:format && yarn test && yarn build"
   },
-  "files": [
-    "contracts/**/*.sol",
-    "artifacts/contracts/**/*.json",
-    "!artifacts/contracts/**/*.dbg.json"
-  ],
+  "files": ["contracts/**/*.sol"],
   "keywords": ["solidity", "stateless", "shuffle", "feistel", "cipher", "fpe"],
-  "author": "Kevin Charm <lucky@ape.engineer>",
+  "author": "Kevin Charm <kevin@kevincharm.com>",
   "license": "Apache-2.0",
   "dependencies": {},
   "devDependencies": {
