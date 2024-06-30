@@ -20,7 +20,7 @@
   "author": "Kevin Charm <kevin@kevincharm.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kevincharm/solshuffle.git"
+    "url": "git+https://github.com/kevincharm/solshuffle.git"
   },
   "license": "MIT",
   "dependencies": {},
